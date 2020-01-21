@@ -2,7 +2,6 @@ from sds011 import *
 from datetime import datetime
 import time
 import aqi
-
 import paho.mqtt.publish as publish
 import psutil
 
@@ -11,15 +10,12 @@ def time_now():
     timestampStr = dateTimeObj.strftime("%d-%b-%Y (%H:%M:%S)")
     return timestampStr
 
-mqttServer="192.168.1.10"
-mqttPort="1883"
- 
 # Converting datetime object to string
 dateTimeObj = datetime.now()
 timestamp = dateTimeObj.strftime("%d-%b-%Y (%H:%M:%S)")
 print('Current Timestamp : ', timestamp)
 
-sensor = SDS011("COM5", use_query_mode=True )
+sensor = SDS011("COM4", use_query_mode=True )
         
 #time.sleep(10)
 #pmt_2_5, pmt_10 = sensor.query()
@@ -85,21 +81,11 @@ def save_log():
     # reconnect then subscriptions will be renewed.
 #    client.subscribe(channelSubs)
 
-# The callback for when a PUBLISH message is received from the server.
-def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
-    
-
-
 #channelID = "962006"
 #apiKey = "9MCNJW57WF27NTQL"
 #topic = "channels/" + channelID + "/publish/" + apiKey
 #mqttHost = "mqtt.thingspeak.com"
 
-broker="localhost"
-tPort = 1883
-topic = sensor
-connect(broker, port=1883)
 while True: 
     pmt_2_5, pmt_10 = get_data()
     aqi_2_5, aqi_10 = conv_aqi(pmt_2_5, pmt_10)
@@ -108,7 +94,6 @@ while True:
     try:
         print("Publishing payload:")
         print(tPayload)
-        #publish.single(topic, payload=tPayload)
         print("Saving log")
         save_log()
         print("Going to sleep")
