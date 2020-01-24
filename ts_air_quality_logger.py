@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 import aqi
 import paho.mqtt.publish as publish
+import paho.mqtt.client as paho
 import psutil
 
 def time_now():
@@ -15,7 +16,7 @@ dateTimeObj = datetime.now()
 timestamp = dateTimeObj.strftime("%d-%b-%Y (%H:%M:%S)")
 print('Current Timestamp : ', timestamp)
 
-sensor = SDS011("COM4", use_query_mode=True )
+sensor = SDS011("/dev/ttyUSB0", use_query_mode=True )
         
 #time.sleep(10)
 #pmt_2_5, pmt_10 = sensor.query()
@@ -64,7 +65,7 @@ def conv_aqi(pmt_2_5, pmt_10):
 #print(f"PMT10: {pmt_10}μg/m3 (AQI:{aqi_10})")
 
 def save_log():        
-    with open("/Users/dyon.jacobs/Desktop/Sensor/air_quality.csv", "a") as log:
+    with open("/home/pi/Sensor/air_quality.csv", "a") as log:
         dt = datetime.now()
         print("Date Time:",dt,
                "PMT 2.5:", pmt_2_5,
@@ -85,17 +86,29 @@ def save_log():
 #apiKey = "9MCNJW57WF27NTQL"
 #topic = "channels/" + channelID + "/publish/" + apiKey
 #mqttHost = "mqtt.thingspeak.com"
+broker = "192.168.11.124"
+topic= "sensors"
+port=1883
 
+def on_publish(client, userdata, result):
+  print("published data is : ","pm2.5 -> " + str(pmt_2_5)+ " aqi2.5-> " + str(aqi_2_5)+ " pm10.0-> " + str(pmt_10)+ " aqi10.0-> " + str(aqi_10))
+  pass
+
+client1=paho.Client("controll")
+client1.on_publish = on_publish
+client1.connect(broker,port,keepalive=60)
+          
 while True: 
     pmt_2_5, pmt_10 = get_data()
     aqi_2_5, aqi_10 = conv_aqi(pmt_2_5, pmt_10)
     print("Creating payload")
-    tPayload = "field1=" + str(pmt_2_5)+ "&field2=" + str(aqi_2_5)+ "&field3=" + str(pmt_10)+ "&field4=" + str(aqi_10)
+    tPayload = "pm2.5 -> " + str(pmt_2_5)+ " aqi2.5 -> " + str(aqi_2_5)+ " pm10.0 -> " + str(pmt_10)+ " aqi10.0 -> " + str(aqi_10)
     try:
         print("Publishing payload:")
-        print(tPayload)
-        print("Saving log")
-        save_log()
+        #print(tPayload)
+        ret=client1.publish(topic,tPayload)
+        #print("Saving log")
+        #save_log()
         print("Going to sleep")
         time.sleep(10)
     except:
